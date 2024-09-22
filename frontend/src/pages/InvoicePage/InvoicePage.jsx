@@ -4,6 +4,7 @@ import { productData } from "../../data/ProductData";
 import { ReactSearchAutocomplete } from "react-search-autocomplete";
 import { Modal, InputFieldForm, SearchText, PrimaryButton } from "../../components";
 import { FaTrashAlt } from "react-icons/fa";
+import { InvoiceList } from "../../data/FakeInvoiceList";
 
 const initialForm = {
     date: "",
@@ -16,6 +17,9 @@ const InvoicePage = () => {
     const [productAdded, setProductAdded] = React.useState([]);
     const [invoiceForm, setInvoiceForm] = React.useState(initialForm);
     const [errorFormMessage, setErrorFormMessage] = React.useState(initialForm);
+
+    const [currentPage, setCurrentPage] = React.useState(1);
+    const [totalPages, setTotalPages] = React.useState(1);
 
     const searchList = React.useMemo(() => {
         const filtered = productData.filter(
@@ -137,7 +141,90 @@ const InvoicePage = () => {
                         + Add Invoice
                     </button>
                 </div>
+                <div className={styles.paginationControls}>
+                    <button
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                    >
+                        Previous
+                    </button>
+                    <span>
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                    >
+                        Next
+                    </button>
+                </div>
+                {InvoiceList.map((item, i) => {
+                    return (
+                        <div key={i} className={styles.invoiceContainer}>
+                            <div className={styles.invoiceDetailSection}>
+                                {/* left */}
+                                <div style={{ flex: 0.3 }}>
+                                    <div className={styles.invoiceDetailMainSection}>
+                                        <p>Invoice No.</p>
+                                        <h4>{item.invoiceNo}</h4>
+                                    </div>
+                                    <div className={styles.invoiceDetailMainSection}>
+                                        <p>Date</p>
+                                        <h4>{item.date}</h4>
+                                    </div>
+                                </div>
+                                {/* mid */}
+                                <div style={{ flex: 0.2 }}>
+                                    <div className={styles.invoiceDetailMainSection}>
+                                        <p>Customer</p>
+                                        <h4>{item.customer}</h4>
+                                    </div>
+                                    <div className={styles.invoiceDetailMainSection}>
+                                        <p>Sales</p>
+                                        <h4>{item.salesPerson}</h4>
+                                    </div>
+                                </div>
+                                {/* right */}
+                                <div style={{ flex: 0.5 }}>
+                                    <h4>Notes</h4>
+                                    <p>{item.notes}</p>
+                                </div>
+                            </div>
+
+                            <div className={styles.invoiceProductListContainer}>
+                                <h3>Products</h3>
+                                {item.products.map((item, i) => {
+                                    return (
+                                        <div key={i}>
+                                            <div className={styles.invoiceProduct}>
+                                                <h4>{`${i + 1}) ${item.item}`}</h4>
+                                                <h4>{item.totalPrice.toLocaleString("id-ID")}</h4>
+                                            </div>
+                                            <span>{`Quantity: ${item.quantity}`}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                }}
+                            >
+                                <h3>Total Price: </h3>
+                                <h3>
+                                    {item.products.reduce((a, b) => {
+                                        const total = a.totalPrice + b.totalPrice;
+                                        return total.toLocaleString("id-ID");
+                                    })}
+                                </h3>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
+
+            {/* input form modal */}
             <Modal isOpen={showForm}>
                 <div className={styles.formHeaderContainer}>
                     <h3>Add new invoice</h3>
