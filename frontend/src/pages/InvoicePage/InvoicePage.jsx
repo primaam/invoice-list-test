@@ -1,12 +1,17 @@
 import React from "react";
 import styles from "./InvoicePage.module.css";
+import axios from "axios";
 import { ReactSearchAutocomplete } from "react-search-autocomplete";
 import { Modal, InputFieldForm, SearchText, PrimaryButton } from "../../components";
 import { FaTrashAlt } from "react-icons/fa";
 import { productData } from "../../data/ProductData";
-import { InvoiceList } from "../../data/FakeInvoiceList";
-import { invoiceRevenue } from "../../data/FakeInvoiceRevenue";
+// import { InvoiceList } from "../../data/FakeInvoiceList";
+// import { invoiceRevenue } from "../../data/FakeInvoiceRevenue";
 import CanvasJSReact from "@canvasjs/react-charts";
+
+import { useSelector, useDispatch } from "react-redux";
+import { storeInvoiceAmountList } from "../../redux/reducer/invoiceAmountListRed";
+import { storeInvoiceList } from "../../redux/reducer/InvoiceListRed";
 
 var CanvasJS = CanvasJSReact.CanvasJS;
 var CanvasJSChart = CanvasJSReact.CanvasJSChart;
@@ -19,6 +24,12 @@ const initialForm = {
 };
 
 const InvoicePage = () => {
+    const dispatch = useDispatch();
+    const invoiceList = useSelector(({ invoiceListReducer }) => invoiceListReducer.data);
+    const invoiceAmountList = useSelector(
+        ({ invoiceAmountListReducer }) => invoiceAmountListReducer.data
+    );
+
     const [showForm, setShowForm] = React.useState(false);
     const [productAdded, setProductAdded] = React.useState([]);
     const [invoiceForm, setInvoiceForm] = React.useState(initialForm);
@@ -28,6 +39,36 @@ const InvoicePage = () => {
     const [totalPages, setTotalPages] = React.useState(1);
 
     const [chartType, setChartType] = React.useState("weekly");
+
+    React.useEffect(() => {
+        const fetchInvoicesAmountList = async () => {
+            try {
+                const response = await axios.get("http://localhost:3000/api/invoice/graph");
+
+                dispatch(storeInvoiceAmountList(response.data));
+            } catch (error) {
+                console.error("Error fetching invoices", error);
+            }
+        };
+
+        fetchInvoicesAmountList();
+    }, []);
+
+    React.useEffect(() => {
+        const fetchInvoices = async () => {
+            try {
+                const response = await axios.get(
+                    `http://localhost:3000/api/invoices?page=${currentPage}&limit=${itemsPerPage}`
+                );
+                dispatch(storeInvoiceList(response.data));
+                setTotalPages(response.data.totalPages);
+            } catch (error) {
+                console.error("Error fetching invoices", error);
+            }
+        };
+
+        fetchInvoices();
+    }, [currentPage]);
 
     const groupByWeek = (invoices) => {
         const getWeekNumber = (date) => {
@@ -64,20 +105,20 @@ const InvoicePage = () => {
     };
 
     const weeklyDataPoints = React.useMemo(() => {
-        const weeklyRevenue = groupByWeek(invoiceRevenue);
+        const weeklyRevenue = groupByWeek(invoiceAmountList);
         return Object.keys(weeklyRevenue).map((week) => ({
             label: week,
             y: weeklyRevenue[week],
         }));
-    }, [invoiceRevenue]);
+    }, [invoiceAmountList]);
 
     const monthlyDataPoints = React.useMemo(() => {
-        const monthlyRevenue = groupByMonth(invoiceRevenue);
+        const monthlyRevenue = groupByMonth(invoiceAmountList);
         return Object.keys(monthlyRevenue).map((month) => ({
             label: month,
             y: monthlyRevenue[month],
         }));
-    }, [invoiceRevenue]);
+    }, [invoiceAmountList]);
 
     const options = {
         theme: "light2", // "light1", "dark1", "dark2"
@@ -179,14 +220,15 @@ const InvoicePage = () => {
         setProductAdded(filtered);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         let hasError = false;
         let newErrors = { ...errorFormMessage };
 
-        if (productAdded.length === 0)
-            return alert("You have to add the product before submitted!");
+        if (productAdded.length === 0) {
+            return alert("You have to add the product before submitting!");
+        }
 
         if (invoiceForm.date === "") {
             newErrors.date = "Date is required.";
@@ -204,10 +246,30 @@ const InvoicePage = () => {
         setErrorFormMessage(newErrors);
 
         if (!hasError) {
-            console.log("Form submitted:", invoiceForm);
-            setErrorFormMessage(initialForm);
-            alert("Invoice Submitted!");
-            handleCloseModal();
+            try {
+                const res = await axios.post("http://localhost:3000/api/invoice", {
+                    ...invoiceForm,
+                    products: productAdded,
+                });
+
+                if (res) {
+                    const resInvoiceAmount = await axios.get(
+                        "http://localhost:3000/api/invoice/graph"
+                    );
+                    const resInvoiceList = await axios.get(
+                        "http://localhost:3000/api/invoice?limit=10&page=1"
+                    );
+
+                    dispatch(storeInvoiceAmountList(resInvoiceAmount.data));
+                    dispatch(storeInvoiceList(resInvoiceList.data));
+                    setErrorFormMessage(initialForm);
+                    alert("Invoice Submitted!");
+                    handleCloseModal();
+                }
+            } catch (error) {
+                console.error("Error submitting invoice:", error);
+                alert("There was an error submitting the invoice. Please try again.");
+            }
         }
     };
 
@@ -242,70 +304,80 @@ const InvoicePage = () => {
                         Next
                     </button>
                 </div>
-                {InvoiceList.map((item, i) => {
-                    return (
-                        <div key={i} className={styles.invoiceContainer}>
-                            <div className={styles.invoiceDetailSection}>
-                                {/* left */}
-                                <div style={{ flex: 0.3 }}>
-                                    <div className={styles.invoiceDetailMainSection}>
-                                        <p>Invoice No.</p>
-                                        <h4>{item.invoiceNo}</h4>
-                                    </div>
-                                    <div className={styles.invoiceDetailMainSection}>
-                                        <p>Date</p>
-                                        <h4>{item.date}</h4>
-                                    </div>
-                                </div>
-                                {/* mid */}
-                                <div style={{ flex: 0.2 }}>
-                                    <div className={styles.invoiceDetailMainSection}>
-                                        <p>Customer</p>
-                                        <h4>{item.customer}</h4>
-                                    </div>
-                                    <div className={styles.invoiceDetailMainSection}>
-                                        <p>Sales</p>
-                                        <h4>{item.salesPerson}</h4>
-                                    </div>
-                                </div>
-                                {/* right */}
-                                <div style={{ flex: 0.5 }}>
-                                    <h4>Notes</h4>
-                                    <p>{item.notes}</p>
-                                </div>
-                            </div>
-
-                            <div className={styles.invoiceProductListContainer}>
-                                <h3>Products</h3>
-                                {item.products.map((item, i) => {
-                                    return (
-                                        <div key={i}>
-                                            <div className={styles.invoiceProduct}>
-                                                <h4>{`${i + 1}) ${item.item}`}</h4>
-                                                <h4>{item.totalPrice.toLocaleString("id-ID")}</h4>
+                {invoiceList ? (
+                    <>
+                        {invoiceList.data.map((item, i) => {
+                            return (
+                                <div key={i} className={styles.invoiceContainer}>
+                                    <div className={styles.invoiceDetailSection}>
+                                        {/* left */}
+                                        <div style={{ flex: 0.3 }}>
+                                            <div className={styles.invoiceDetailMainSection}>
+                                                <p>Invoice No.</p>
+                                                <h4>{item.invoiceNo}</h4>
                                             </div>
-                                            <span>{`Quantity: ${item.quantity}`}</span>
+                                            <div className={styles.invoiceDetailMainSection}>
+                                                <p>Date</p>
+                                                <h4>{item.date}</h4>
+                                            </div>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                }}
-                            >
-                                <h3>Total Price: </h3>
-                                <h3>
-                                    {item.products.reduce((a, b) => {
-                                        const total = a.totalPrice + b.totalPrice;
-                                        return total.toLocaleString("id-ID");
-                                    })}
-                                </h3>
-                            </div>
-                        </div>
-                    );
-                })}
+                                        {/* mid */}
+                                        <div style={{ flex: 0.2 }}>
+                                            <div className={styles.invoiceDetailMainSection}>
+                                                <p>Customer</p>
+                                                <h4>{item.customer}</h4>
+                                            </div>
+                                            <div className={styles.invoiceDetailMainSection}>
+                                                <p>Sales</p>
+                                                <h4>{item.salesPerson}</h4>
+                                            </div>
+                                        </div>
+                                        {/* right */}
+                                        <div style={{ flex: 0.5 }}>
+                                            <h4>Notes</h4>
+                                            <p>{item.notes}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className={styles.invoiceProductListContainer}>
+                                        <h3>Products</h3>
+                                        {item.products.map((item, i) => {
+                                            return (
+                                                <div key={i}>
+                                                    <div className={styles.invoiceProduct}>
+                                                        <h4>{`${i + 1}) ${item.item}`}</h4>
+                                                        <h4>
+                                                            {item.totalPrice.toLocaleString(
+                                                                "id-ID"
+                                                            )}
+                                                        </h4>
+                                                    </div>
+                                                    <span>{`Quantity: ${item.quantity}`}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                        }}
+                                    >
+                                        <h3>Total Price: </h3>
+                                        <h3>
+                                            {item.products.reduce((a, b) => {
+                                                const total = a.totalPrice + b.totalPrice;
+                                                return total.toLocaleString("id-ID");
+                                            })}
+                                        </h3>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </>
+                ) : (
+                    <></>
+                )}
             </div>
 
             {/* input form modal */}
