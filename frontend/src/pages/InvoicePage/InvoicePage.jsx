@@ -1,10 +1,15 @@
 import React from "react";
 import styles from "./InvoicePage.module.css";
-import { productData } from "../../data/ProductData";
 import { ReactSearchAutocomplete } from "react-search-autocomplete";
 import { Modal, InputFieldForm, SearchText, PrimaryButton } from "../../components";
 import { FaTrashAlt } from "react-icons/fa";
+import { productData } from "../../data/ProductData";
 import { InvoiceList } from "../../data/FakeInvoiceList";
+import { invoiceRevenue } from "../../data/FakeInvoiceRevenue";
+import CanvasJSReact from "@canvasjs/react-charts";
+
+var CanvasJS = CanvasJSReact.CanvasJS;
+var CanvasJSChart = CanvasJSReact.CanvasJSChart;
 
 const initialForm = {
     date: "",
@@ -12,6 +17,7 @@ const initialForm = {
     salesPerson: "",
     notes: "",
 };
+
 const InvoicePage = () => {
     const [showForm, setShowForm] = React.useState(false);
     const [productAdded, setProductAdded] = React.useState([]);
@@ -20,6 +26,34 @@ const InvoicePage = () => {
 
     const [currentPage, setCurrentPage] = React.useState(1);
     const [totalPages, setTotalPages] = React.useState(1);
+
+    const dataPoints = invoiceRevenue.map((item) => {
+        return {
+            label: item.date,
+            y: item.totalPrice,
+        };
+    });
+
+    const options = {
+        theme: "light2", // "light1", "dark1", "dark2"
+        animationEnabled: true,
+        zoomEnabled: true,
+        axisX: {
+            title: "Date",
+        },
+        axisY: {
+            title: "Total Income",
+        },
+        title: {
+            text: "Revenue",
+        },
+        data: [
+            {
+                type: "area",
+                dataPoints: dataPoints,
+            },
+        ],
+    };
 
     const searchList = React.useMemo(() => {
         const filtered = productData.filter(
@@ -141,6 +175,7 @@ const InvoicePage = () => {
                         + Add Invoice
                     </button>
                 </div>
+                <CanvasJSChart options={options} />
                 <div className={styles.paginationControls}>
                     <button
                         onClick={() => setCurrentPage(currentPage - 1)}

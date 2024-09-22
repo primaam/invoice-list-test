@@ -9,7 +9,6 @@
 
 .mainContainer{
     width: 900px;
-    height: 100%;
 }
 
 .header{
@@ -104,7 +103,7 @@
     border: 1px solid grey;
     padding: 10px 20px;
     border-radius: 10px;
-    margin: 10px 0;
+    margin: 20px 0;
 }
 
 .invoiceDetailSection{
@@ -140,5 +139,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    margin-top: 20px;
 }
 
