@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./InvoicePage.module.css";
 import { productData } from "../../data/ProductData";
 import { ReactSearchAutocomplete } from "react-search-autocomplete";
-import { Modal, InputFieldForm, SearchText } from "../../components";
+import { Modal, InputFieldForm, SearchText, PrimaryButton } from "../../components";
 import { FaTrashAlt } from "react-icons/fa";
 
 const initialForm = {
@@ -34,6 +34,7 @@ const InvoicePage = () => {
             return 0;
         }
     }, [productAdded]);
+
     const handleOpenModal = () => {
         setShowForm(true);
     };
@@ -93,6 +94,38 @@ const InvoicePage = () => {
         const filtered = productAdded.filter((item) => item.id !== id);
 
         setProductAdded(filtered);
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        let hasError = false;
+        let newErrors = { ...errorFormMessage };
+
+        if (productAdded.length === 0)
+            return alert("You have to add the product before submitted!");
+
+        if (invoiceForm.date === "") {
+            newErrors.date = "Date is required.";
+            hasError = true;
+        }
+        if (invoiceForm.customer.trim() === "") {
+            newErrors.customer = "Customer name is required.";
+            hasError = true;
+        }
+        if (invoiceForm.salesPerson.trim() === "") {
+            newErrors.salesPerson = "Sales person is required.";
+            hasError = true;
+        }
+
+        setErrorFormMessage(newErrors);
+
+        if (!hasError) {
+            console.log("Form submitted:", invoiceForm);
+            setErrorFormMessage(initialForm);
+            alert("Invoice Submitted!");
+            handleCloseModal();
+        }
     };
 
     return (
@@ -178,36 +211,14 @@ const InvoicePage = () => {
                     <>
                         {productAdded.map((item, i) => {
                             return (
-                                <div
-                                    key={i}
-                                    style={{
-                                        minHeight: "50px",
-                                        padding: "10px",
-                                        borderBottom: "1px solid grey",
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            flexDirection: "row",
-                                            justifyContent: "space-between",
-                                            alignItems: "center",
-                                            marginBottom: "10px",
-                                        }}
-                                    >
+                                <div key={i} className={styles.formProductContainer}>
+                                    <div className={styles.formProductDetail}>
                                         <span>{item.item}</span>
                                         <span>
                                             {(item.price * item.quantity).toLocaleString("id-ID")}
                                         </span>
                                     </div>
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "flex-start",
-                                            gap: "10px",
-                                        }}
-                                    >
+                                    <div className={styles.formProductButtonContainer}>
                                         <button onClick={() => handleDeleteProduct(item.id)}>
                                             <FaTrashAlt />
                                         </button>
@@ -223,6 +234,26 @@ const InvoicePage = () => {
                 ) : (
                     <></>
                 )}
+                <div className={styles.formSectionContainer}>
+                    <h3>Total Price:</h3>
+                    <h3>{totalPrice}</h3>
+                </div>
+                <div className={styles.formSectionContainer}>
+                    <PrimaryButton
+                        onClick={handleCloseModal}
+                        style={{
+                            backgroundColor: "lightgrey",
+                        }}
+                        title={"Cancel"}
+                    />
+                    <PrimaryButton
+                        style={{
+                            backgroundColor: "lightblue",
+                        }}
+                        title={"Submit"}
+                        onClick={handleSubmit}
+                    />
+                </div>
             </Modal>
         </div>
     );

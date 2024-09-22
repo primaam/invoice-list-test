@@ -44,6 +44,34 @@
     margin-bottom: 15px;
 }
 
+.formProductContainer{
+    min-height: 50px;
+    padding: 10px;
+    border-bottom: 1px solid grey;
+}
+
+.formProductDetail{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.formProductButtonContainer{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+.formSectionContainer{
+    display: flex;
+    justify-content: space-between;
+    margin: 15px 0;
+    gap: 10px;
+}
+
 .searchResultContainer{
     display: flex;
     flex-direction: row;
