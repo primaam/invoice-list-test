@@ -1,0 +1,6 @@
+.container{
+    flex: 1;
+    min-height: 30px;
+    border-radius: 8px;
+    font-size: medium;
+}
