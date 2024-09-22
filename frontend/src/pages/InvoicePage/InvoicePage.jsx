@@ -43,7 +43,7 @@ const InvoicePage = () => {
     React.useEffect(() => {
         const fetchInvoicesAmountList = async () => {
             try {
-                const response = await axios.get("http://localhost:3000/api/invoice/graph");
+                const response = await axios.get("http://localhost:5000/api/invoice/graph");
 
                 dispatch(storeInvoiceAmountList(response.data));
             } catch (error) {
@@ -58,7 +58,7 @@ const InvoicePage = () => {
         const fetchInvoices = async () => {
             try {
                 const response = await axios.get(
-                    `http://localhost:3000/api/invoices?page=${currentPage}&limit=${itemsPerPage}`
+                    `http://localhost:5000/api/invoices?page=${currentPage}&limit=${itemsPerPage}`
                 );
                 dispatch(storeInvoiceList(response.data));
                 setTotalPages(response.data.totalPages);
@@ -247,17 +247,17 @@ const InvoicePage = () => {
 
         if (!hasError) {
             try {
-                const res = await axios.post("http://localhost:3000/api/invoice", {
+                const res = await axios.post("http://localhost:5000/api/invoice", {
                     ...invoiceForm,
                     products: productAdded,
                 });
 
                 if (res) {
                     const resInvoiceAmount = await axios.get(
-                        "http://localhost:3000/api/invoice/graph"
+                        "http://localhost:5000/api/invoice/graph"
                     );
                     const resInvoiceList = await axios.get(
-                        "http://localhost:3000/api/invoice?limit=10&page=1"
+                        "http://localhost:5000/api/invoice?limit=10&page=1"
                     );
 
                     dispatch(storeInvoiceAmountList(resInvoiceAmount.data));

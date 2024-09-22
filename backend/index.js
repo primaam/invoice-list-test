@@ -1,11 +1,11 @@
-import { router as invoiceRoutes } from "./routes";
+const router = require("./routes/index");
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const pool = require("./database/db");
 
 const app = express();
-const port = 3000;
+const port = 5000;
 
 app.use(
     cors({
@@ -14,7 +14,11 @@ app.use(
         allowedHeaders: ["Content-Type", "Authorization"],
     })
 );
+
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+});
 app.use(express.json());
-app.use("/api", invoiceRoutes);
+app.use("/api", router);
 
 module.exports = { app };

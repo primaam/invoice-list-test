@@ -122,4 +122,4 @@ const getInvoiceAmount = async (req, res) => {
     }
 };
 
-export { createInvoice, getInvoices, getInvoiceAmount };
+module.exports = { createInvoice, getInvoices, getInvoiceAmount };
