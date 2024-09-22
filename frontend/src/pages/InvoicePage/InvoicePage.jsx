@@ -5,8 +5,6 @@ import { ReactSearchAutocomplete } from "react-search-autocomplete";
 import { Modal, InputFieldForm, SearchText, PrimaryButton } from "../../components";
 import { FaTrashAlt } from "react-icons/fa";
 import { productData } from "../../data/ProductData";
-// import { InvoiceList } from "../../data/FakeInvoiceList";
-// import { invoiceRevenue } from "../../data/FakeInvoiceRevenue";
 import CanvasJSReact from "@canvasjs/react-charts";
 
 import { useSelector, useDispatch } from "react-redux";
@@ -58,7 +56,7 @@ const InvoicePage = () => {
         const fetchInvoices = async () => {
             try {
                 const response = await axios.get(
-                    `http://localhost:5000/api/invoices?page=${currentPage}&limit=${itemsPerPage}`
+                    `http://localhost:5000/api/invoice?page=${currentPage}&limit=10`
                 );
                 dispatch(storeInvoiceList(response.data));
                 setTotalPages(response.data.totalPages);
@@ -71,6 +69,10 @@ const InvoicePage = () => {
     }, [currentPage]);
 
     const groupByWeek = (invoices) => {
+        if (Array.isArray(invoices) === false) {
+            console.error("Expected invoices to be an array, but got:", invoices);
+            return {};
+        }
         const getWeekNumber = (date) => {
             const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
             const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
@@ -90,6 +92,10 @@ const InvoicePage = () => {
     };
 
     const groupByMonth = (invoices) => {
+        if (!Array.isArray(invoices)) {
+            console.error("Expected invoices to be an array, but got:", invoices);
+            return {};
+        }
         return invoices.reduce((acc, invoice) => {
             const date = new Date(invoice.date.split("-").reverse().join("-"));
             const month = `${date.getFullYear()}-${(date.getMonth() + 1)
@@ -105,7 +111,7 @@ const InvoicePage = () => {
     };
 
     const weeklyDataPoints = React.useMemo(() => {
-        const weeklyRevenue = groupByWeek(invoiceAmountList);
+        const weeklyRevenue = groupByWeek(invoiceAmountList.data);
         return Object.keys(weeklyRevenue).map((week) => ({
             label: week,
             y: weeklyRevenue[week],
@@ -260,6 +266,8 @@ const InvoicePage = () => {
                         "http://localhost:5000/api/invoice?limit=10&page=1"
                     );
 
+                    console.log(resInvoiceAmount.data, resInvoiceList.data);
+
                     dispatch(storeInvoiceAmountList(resInvoiceAmount.data));
                     dispatch(storeInvoiceList(resInvoiceList.data));
                     setErrorFormMessage(initialForm);
@@ -304,7 +312,7 @@ const InvoicePage = () => {
                         Next
                     </button>
                 </div>
-                {invoiceList ? (
+                {invoiceList.data ? (
                     <>
                         {invoiceList.data.map((item, i) => {
                             return (
@@ -376,7 +384,7 @@ const InvoicePage = () => {
                         })}
                     </>
                 ) : (
-                    <></>
+                    <div>There is no data</div>
                 )}
             </div>
 
@@ -475,7 +483,7 @@ const InvoicePage = () => {
                         })}
                     </>
                 ) : (
-                    <></>
+                    <div>There is no data</div>
                 )}
                 <div className={styles.formSectionContainer}>
                     <h3>Total Price:</h3>

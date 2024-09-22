@@ -100,13 +100,13 @@ const getInvoiceAmount = async (req, res) => {
                 i.date,
                 i.customer, 
                 i.salesPerson, 
-                p.totalPrice 
+                SUM(p.totalPrice) AS totalPrice
             FROM 
                 invoice i
             LEFT JOIN 
                 productSold p ON i.invoiceNo = p.invoiceNo
             GROUP BY 
-                i.invoiceNo, i.date
+                i.invoiceNo, i.date, i.customer, i.salesPerson, totalPrice
             ORDER BY 
                 i.date DESC`
         );

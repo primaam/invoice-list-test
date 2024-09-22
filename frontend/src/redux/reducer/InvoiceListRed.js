@@ -1,7 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const initialState = {
-    data: {},
+    current: 1,
+    totalItems: 0,
+    totalPages: 0,
+    data: [],
 };
 
 const invoiceListSlice = createSlice({
@@ -9,7 +12,10 @@ const invoiceListSlice = createSlice({
     name: "invoiceList",
     reducers: {
         storeInvoiceList(state, action) {
-            state.data = action.payload;
+            state.current = action.payload.current;
+            state.totalItems = action.payload.totalItems;
+            state.totalPages = action.payload.totalPages;
+            state.data = action.payload.data;
         },
     },
 });
