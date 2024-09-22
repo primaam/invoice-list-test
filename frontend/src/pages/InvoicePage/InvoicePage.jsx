@@ -27,12 +27,57 @@ const InvoicePage = () => {
     const [currentPage, setCurrentPage] = React.useState(1);
     const [totalPages, setTotalPages] = React.useState(1);
 
-    const dataPoints = invoiceRevenue.map((item) => {
-        return {
-            label: item.date,
-            y: item.totalPrice,
+    const [chartType, setChartType] = React.useState("weekly");
+
+    const groupByWeek = (invoices) => {
+        const getWeekNumber = (date) => {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
         };
-    });
+
+        return invoices.reduce((acc, invoice) => {
+            const date = new Date(invoice.date.split("-").reverse().join("-"));
+            const week = `${date.getFullYear()}-W${getWeekNumber(date)}`;
+
+            if (!acc[week]) {
+                acc[week] = 0;
+            }
+            acc[week] += invoice.totalPrice;
+            return acc;
+        }, {});
+    };
+
+    const groupByMonth = (invoices) => {
+        return invoices.reduce((acc, invoice) => {
+            const date = new Date(invoice.date.split("-").reverse().join("-"));
+            const month = `${date.getFullYear()}-${(date.getMonth() + 1)
+                .toString()
+                .padStart(2, "0")}`;
+
+            if (!acc[month]) {
+                acc[month] = 0;
+            }
+            acc[month] += invoice.totalPrice;
+            return acc;
+        }, {});
+    };
+
+    const weeklyDataPoints = React.useMemo(() => {
+        const weeklyRevenue = groupByWeek(invoiceRevenue);
+        return Object.keys(weeklyRevenue).map((week) => ({
+            label: week,
+            y: weeklyRevenue[week],
+        }));
+    }, [invoiceRevenue]);
+
+    const monthlyDataPoints = React.useMemo(() => {
+        const monthlyRevenue = groupByMonth(invoiceRevenue);
+        return Object.keys(monthlyRevenue).map((month) => ({
+            label: month,
+            y: monthlyRevenue[month],
+        }));
+    }, [invoiceRevenue]);
 
     const options = {
         theme: "light2", // "light1", "dark1", "dark2"
@@ -50,7 +95,7 @@ const InvoicePage = () => {
         data: [
             {
                 type: "area",
-                dataPoints: dataPoints,
+                dataPoints: chartType === "weekly" ? weeklyDataPoints : monthlyDataPoints,
             },
         ],
     };
@@ -174,6 +219,10 @@ const InvoicePage = () => {
                     <button className={styles.addButton} onClick={handleOpenModal}>
                         + Add Invoice
                     </button>
+                </div>
+                <div>
+                    <button onClick={() => setChartType("weekly")}>Weekly</button>
+                    <button onClick={() => setChartType("monthly")}>Monthly</button>
                 </div>
                 <CanvasJSChart options={options} />
                 <div className={styles.paginationControls}>
